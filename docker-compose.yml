@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  
+  mongo:
+    container_name: mongo-database
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - shared-net
+
+  redis:
+    container_name: redis-database
+    image: redis
+    ports:
+      - '6379:6379'
+    networks:
+      - shared-net
+
+volumes:
+  mongo-data:
+networks:
+  shared-net:
