@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { createClient } from "redis";
 
-export const redisClient = createClient();
+export const redisClient = createClient({ url: process.env.REDIS_URL });
 
 export default async function connectDatabases() {
     try {

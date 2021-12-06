@@ -34,11 +34,9 @@ app.get('/logout', verifyToken, logout);
 
 app.post('/refresh', verifyRefreshToken, getTokens);
 
-app.get('/dashboard', verifyToken, (req, res) => {
-    const user = req.user;
-    res.json({ user });
+app.get('/dashboard', verifyToken, (req: express.Request, res: express.Response) => {
+    res.status(200).send(req.user);
 });
-
 
 app.get('/google',
     passport.authenticate('google', <any>{

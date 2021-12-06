@@ -1,0 +1,35 @@
+version: "3.6"
+services:
+  api:
+    build: .
+    depends_on:
+      - redisdb
+      - mongodb
+    ports:
+      - "5000:5000"
+    networks:
+      - sharedNet
+    volumes:
+      - ./:/home/api/
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - sharedNet
+    volumes:
+      - mongo-data:/data/db
+
+  redisdb:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sharedNet
+
+volumes:
+  mongo-data: null
+networks:
+  sharedNet:
+    driver: bridge
