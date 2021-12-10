@@ -20,20 +20,22 @@ export async function generateRefreshToken(userId: string): Promise<string> {
             expiresIn: process.env.REFRESH_TOKEN_AGE,
         }
     );
+
     await redisClient.set(userId, JSON.stringify({
-        token: token,
+        refreshToken: token,
         expiresIn: process.env.REFRESH_TOKEN_AGE
     }));
+
     return token;
+
 }
 
 export async function deleteTokens(userId: string, token: string): Promise<void> {
     try {
         await redisClient.del(userId);
-        await redisClient.set('BL_' + userId, token);   //blacklisting this tokens
+        await redisClient.set('BL_' + userId, token);
     } catch (err) {
         console.error(err);
         process.exit(1);
     }
-
 }

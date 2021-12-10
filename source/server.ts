@@ -5,10 +5,20 @@ import "dotenv/config";
 import passport from "passport";
 import connectDatabases from "./database/db.connect";
 import googleStrategy from "./passport/google.passport";
-import { getTokens, login, logout, register } from "./controllers/auth.controller";
-import { verifyRefreshToken, verifyToken } from "./middlewares/verify.middleware";
+import { verifyToken } from "./middlewares/verification.middleware";
 
 import { IUser } from "./database/user.model";
+
+import cookieParser from "cookie-parser";
+
+import local from "./routes/local.route";
+import social from "./routes/social.route";
+
+import helmet from "helmet";
+import fs from "fs";
+import path from "path";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
 
 declare module "express" {
     export interface Request {
@@ -16,11 +26,20 @@ declare module "express" {
         token: string;
     }
 }
-
 const app: express.Application = express();
-app.use(morgan('dev'));
-app.use(express.json());
+app.use(morgan((() => {
+    if (process.env.NODE_ENV === 'production')
+        return 'combined'
+    return 'dev'
+})(), { stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }) }));
 
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }))
+app.use(mongoSanitize());
+app.use(cookieParser());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }))
 app.use(passport.initialize());
 passport.use(googleStrategy);
 
@@ -28,27 +47,13 @@ passport.use(googleStrategy);
     await connectDatabases();
 })()
 
-app.post('/login', login);
-app.post('/register', register);
-app.get('/logout', verifyToken, logout);
-
-app.post('/refresh', verifyRefreshToken, getTokens);
+app.use('/', local);
+app.use('/social', social);
 
 app.get('/dashboard', verifyToken, (req: express.Request, res: express.Response) => {
-    res.status(200).send(req.user);
+    const { username, email, provider } = req.user;
+    res.status(200).send({ username, email, provider });
 });
-
-app.get('/google',
-    passport.authenticate('google', <any>{
-        session: false,
-        scope: ['profile', 'email'],
-        accessType: 'offline',
-        prompt: 'consent',
-    }));
-app.get('/google/redirect',
-    passport.authenticate('google', { session: false }), getTokens
-);
-
 
 app.listen(5000, () =>
     console.log(`[server] listening at 5000`)

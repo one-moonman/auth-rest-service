@@ -3,7 +3,7 @@ import UserModel, { IUser } from "../database/user.model";
 
 const googleStrategy: GoogleStrategy = new GoogleStrategy(
     {
-        callbackURL: 'http://localhost:5000/google/redirect',
+        callbackURL: 'http://localhost:5000/social/google/redirect',
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },

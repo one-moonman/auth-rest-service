@@ -9,8 +9,6 @@ services:
       - "5000:5000"
     networks:
       - sharedNet
-    volumes:
-      - ./:/home/api/
 
   mongodb:
     image: mongo

@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 export interface IUser extends mongoose.Document {
     email: string;
     username: string;
-    password: string;
+    hash: string;
+    salt: string;
     provider: string;
 }
 
@@ -19,7 +20,8 @@ const schema = new mongoose.Schema({
         type: String,
         required: true
     },
-    password: String,
+    hash: String,
+    salt: String,
     provider: {
         type: String,
         required: [true, "Provider is not specified"]

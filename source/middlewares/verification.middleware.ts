@@ -6,12 +6,12 @@ import { redisClient } from "../database/db.connect";
 
 export async function verifyToken(req: Request, res: Response, next: NextFunction) {
     try {
-        const token: string = req.headers.authorization.split(' ')[1];
+        const token: string = req.cookies.accessToken;
         const decodedToken: string | jwt.JwtPayload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         const user: IUser = await UserModel.findById((<IUser>decodedToken)._id);
         if (!user)
-            return res.status(400).json({ status: false, message: "User not found" });
+            return res.status(404).json({ status: false, message: "User not found" });
 
         const blacklisted: string = await redisClient.get('BL_' + user._id);
         if (token === blacklisted)
@@ -22,35 +22,34 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
         next();
     } catch (err) {
-        return res.status(401).json({ status: false, message: "Your token is not valid.", data: err });
+        res.json({ status: false, error: err });
     }
 }
 
 export async function verifyRefreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-        const token: string = req.headers.authorization.split(' ')[1];
+        const token: string = req.cookies.refreshToken;
 
         if (!token)
-            return res.status(401).json({ error: "Unauthorized, Access Denied. No token provided" });
+            return res.status(401).json({ status: false, message: "No token provided" });
 
         const decodedToken: string | jwt.JwtPayload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
         const user: IUser = await UserModel.findById((<IUser>decodedToken)._id);
         if (!user)
-            res.status(400).json({ status: false, message: "User not found" });
+            res.status(404).json({ status: false, message: "User not found" });
 
-        const mem: string = await redisClient.get(user.id);
-        if (!mem)
-            return res.status(401).json({ message: "Invalid request. Token is not in store." });
+        const memory: string = await redisClient.get(user.id);
+        if (!memory)
+            return res.status(401).json({ status: false, message: "Token is not in store." });
 
-        if (JSON.parse(mem).token !== token)
-            return res.status(401).json({ message: "Invalid request. Token is not same in store." });
+        if (JSON.parse(memory).token !== token)
+            return res.status(401).json({ status: false, message: "Token is not same in store." });
 
         req.user = user;
-        next();
 
+        next();
     } catch (err) {
-        console.error(err)
-        return res.status(401).json({ status: false, message: "Your token is not valid.", data: err });
+        res.json({ status: false, error: err });
     }
 }
