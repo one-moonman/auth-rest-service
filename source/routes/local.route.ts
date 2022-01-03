@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { register, login, logout, generateTokens } from "../controllers/auth.controller";
-import { verifyToken, verifyRefreshToken } from "../middlewares/verification.middleware";
+import controller from "../controller";
+import verify from "../middleware";
 
 const local: Router = Router();
 
-local.post('/login', login);
-local.post('/register', register);
-local.get('/logout', verifyToken, logout);
-local.post('/refresh', verifyRefreshToken, generateTokens);
+local.post('/login', controller.login);
+local.post('/register', controller.register);
+local.get('/logout', verify.verifyToken, controller.logout);
+local.post('/refresh', verify.verifyRefreshToken, controller.generateTokens);
 
 export default local;

@@ -1,5 +1,5 @@
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-google-oauth20";
-import UserModel, { IUser } from "../database/user.model";
+import userRepository from "../repository";
 
 const googleStrategy: GoogleStrategy = new GoogleStrategy(
     {
@@ -10,13 +10,13 @@ const googleStrategy: GoogleStrategy = new GoogleStrategy(
     async (_, __, profile: Profile, done: VerifyCallback) => {
         try {
             const email: string = profile.emails[0].value;
-            let user: IUser = await UserModel.findOne({ email });
+            let user = await userRepository.findByEmail(email);
             if (!user) {
-                user = await new UserModel({
+                user = await userRepository.createNew({
                     email,
                     username: profile.displayName,
                     provider: profile.provider,
-                }).save();
+                });
             }
             return done(null, user);
         } catch (err) {
