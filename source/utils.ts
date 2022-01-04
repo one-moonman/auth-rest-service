@@ -3,13 +3,21 @@ import jwt from "jsonwebtoken";
 import { redisClient } from ".";
 
 export async function generatePassword(password: string): Promise<{ salt: string, hash: string }> {
-    const salt: string = await bcrypt.genSalt(12);
-    const hash: string = await bcrypt.hash(password, salt);
-    return { salt, hash };
+    try {
+        const salt: string = await bcrypt.genSalt(12);
+        const hash: string = await bcrypt.hash(password, salt);
+        return { salt, hash };
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+    }
 }
 
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
-    return await bcrypt.compare(password, hash);
+    return await bcrypt.compare(password, hash).catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 }
 
 export function generateAccessToken(userId: string): string {
@@ -35,7 +43,10 @@ export async function generateRefreshToken(userId: string): Promise<string> {
     await redisClient.set(userId, JSON.stringify({
         refreshToken: token,
         expiresIn: process.env.REFRESH_TOKEN_AGE
-    }))
+    })).catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 
     return token;
 }
