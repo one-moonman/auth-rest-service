@@ -1,7 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
 import googleStrategy from "../passport/google.passport";
-import authController from "../controller";
+import authService from "../service";
 
 const social: Router = Router();
 social.use(passport.initialize());
@@ -18,7 +18,7 @@ google.get('/',
 google.get('/redirect',
     passport.authenticate('google',
         { session: false }),
-    authController.generateTokens
+    authService.generateTokens
 );
 
 export default social;

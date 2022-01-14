@@ -1,5 +1,6 @@
+import createHttpError from "http-errors";
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-google-oauth20";
-import userRepository from "../repository";
+import userController from "../controller";
 
 const googleStrategy: GoogleStrategy = new GoogleStrategy(
     {
@@ -10,9 +11,11 @@ const googleStrategy: GoogleStrategy = new GoogleStrategy(
     async (_, __, profile: Profile, done: VerifyCallback) => {
         try {
             const email: string = profile.emails[0].value;
-            let user = await userRepository.findByEmail(email);
+            let user = await userController.findByEmail(email);
+            if (user.provider === "local")
+                return done(createHttpError(403, "Email used by local user"), null);
             if (!user) {
-                user = await userRepository.createNew({
+                user = await userController.createNew({
                     email,
                     username: profile.displayName,
                     provider: profile.provider,

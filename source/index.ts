@@ -17,7 +17,6 @@ import { User } from "@prisma/client";
 import local from "./routes/local.route";
 import social from "./routes/social.route";
 
-
 // redis setup
 import { createClient } from "redis";
 import errorHandler from "./errorHandler";
@@ -64,6 +63,7 @@ declare module "express" {
 
     // error handler
     app.use(errorHandler);
+
 
     app.listen(process.env.PORT || 5000, () => console.log(`[server] listening at ${process.env.PORT || 5000}`))
 })()
