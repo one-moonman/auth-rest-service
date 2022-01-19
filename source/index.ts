@@ -6,6 +6,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 // own middleware
 import verifyMiddleware from "./middleware";
@@ -49,7 +50,8 @@ declare module "express" {
         .use(morgan('dev'))
         .use(helmet())
         .use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }))
-        .use(cookieParser());
+        .use(cookieParser())
+        .use(cors({ origin:'*'}));
 
     await connectRedis();
 
@@ -58,7 +60,7 @@ declare module "express" {
         .use('/social', social)
         .get('/dashboard', verifyMiddleware.verifyToken, (req: express.Request, res: express.Response) => {
             const { email, username, provider } = req.user;
-            res.status(200).send({ username, email, provider });
+            res.status(200).send({ success: true, message: "User example dashborad", data: { username, email, provider }});
         });
 
     // error handler

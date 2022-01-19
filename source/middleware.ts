@@ -7,20 +7,18 @@ import { redisClient } from ".";
 async function verifyToken(req: Request, _: Response, next: NextFunction) {
     const token: string = req.headers.authorization.split(' ')[1];
     const decodedToken: string | jwt.JwtPayload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-    const user = await userController.findById((<jwt.JwtPayload>decodedToken).id);
+    const user = await userController.findById((<any>decodedToken).sub);
     if (!user)
         next(createHttpError(404, "User not found"));
 
-    const blacklisted: string = await redisClient.get('BL_' + user.id);
-    if (token === blacklisted)
+    const isblacklistedTokens: boolean = await redisClient.SISMEMBER('BL_' + user.id, token);
+    if (isblacklistedTokens)
         next(createHttpError(401, "Token is blacklisted"));
 
     req.user = user;
     req.token = token;
 
     next();
-
 }
 
 async function verifyRefreshToken(req: Request, _: Response, next: NextFunction) {
@@ -31,16 +29,21 @@ async function verifyRefreshToken(req: Request, _: Response, next: NextFunction)
 
     const decodedToken: string | jwt.JwtPayload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
-    const user = await userController.findById((<jwt.JwtPayload>decodedToken).id);
+    const user = await userController.findById((<any>decodedToken).sub);
     if (!user)
         return next(createHttpError(404, "User not found"));
 
-    const fromMemory: string = await redisClient.get(user.id);
-    if (!fromMemory)
-        return next(createHttpError(401, "Token is not in store"));
+    let tokenStore: string[] = [];
+    const pattern: string = '*' + user.id + "_" + '*';
+    const keys = await redisClient.keys(pattern);
 
-    if (JSON.parse(fromMemory).refreshToken !== token)
-        return next(createHttpError(401, "Token is not same in store."))
+    for (let i = 0; i < keys.length; i++) {
+        const fromMemory = await redisClient.get(keys[i]);
+        const { refreshToken } = JSON.parse(fromMemory);
+        tokenStore.push(refreshToken);
+    }
+    if (!tokenStore.includes(token))
+        return next(createHttpError(401, "Token is not in store"))
 
     req.user = user;
 

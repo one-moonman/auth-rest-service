@@ -4,6 +4,7 @@ import createHttpError from "http-errors";
 import * as util from "./utils";
 import userController from "./controller";
 import { validate } from "email-validator";
+import { v4 as uuidv4 } from 'uuid';
 
 export default {
     register: async (req: Request, res: Response, next: NextFunction) => {
@@ -22,7 +23,7 @@ export default {
             hash,
             provider: "local"
         })
-        return res.status(200).json({ status: true, message: "User is registered" });
+        return res.status(200).json({ success: true, message: "User is registered" });
     },
     login: async (req: Request, res: Response, next: NextFunction) => {
         const { email, password }: { email: string, password: string } = req.body;
@@ -35,11 +36,12 @@ export default {
         if (!isMatch)
             return next(createHttpError(400, "Invalid password credential"))
 
-        const accessToken: string = util.generateAccessToken(user.id);
-        const refreshToken: string = await util.generateRefreshToken(user.id);
+        const jti = uuidv4();
+        const accessToken: string = util.generateAccessToken(user.id, jti);
+        const refreshToken: string = await util.generateRefreshToken(user.id, jti);
 
         return res.status(200).json({
-            status: true,
+            success: true,
             message: "User logged in",
             data: {
                 access: accessToken,
@@ -49,11 +51,13 @@ export default {
     },
     logout: async (req: Request, res: Response, _: NextFunction) => {
         await util.deleteTokens(req.user.id, req.token);
-        return res.status(200).json({ status: true, message: "User logged out" });
+        return res.status(200).json({ success: true, message: "User logged out" });
     },
     generateTokens: async (req: Request, res: Response, _: NextFunction) => {
-        const accessToken: string = util.generateAccessToken(req.user.id);
-        const refreshToken: string = await util.generateRefreshToken(req.user.id);
+
+        const jti = uuidv4();
+        const accessToken: string = util.generateAccessToken(req.user.id, jti);
+        const refreshToken: string = await util.generateRefreshToken(req.user.id, jti);
 
         return res
             .status(200)
@@ -69,6 +73,6 @@ export default {
     deleteAccont: async (req: Request, res: Response, _: NextFunction) => {
         await util.deleteTokens(req.user.id, req.token);
         await userController.deleteOne(req.user.id)
-        return res.status(200).json({ status: true, message: "User logged out" });
+        return res.status(200).json({ success: true, message: "User logged out" });
     },
 }
