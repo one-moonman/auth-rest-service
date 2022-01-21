@@ -4,6 +4,9 @@
         "module": "commonjs",
         "rootDir": "./source",
         "outDir": "./build",
+        "lib": [
+            "esnext"
+        ],
         "esModuleInterop": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,

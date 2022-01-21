@@ -43,7 +43,7 @@ async function verifyRefreshToken(req: Request, _: Response, next: NextFunction)
         tokenStore.push(refreshToken);
     }
     if (!tokenStore.includes(token))
-        return next(createHttpError(401, "Token is not in store"))
+        return next(createHttpError(401, "Token not in store"))
 
     req.user = user;
 

@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { redisClient } from ".";
+import ms from "ms";
 
 export async function generatePassword(password: string): Promise<{ salt: string, hash: string }> {
     try {
@@ -51,7 +52,8 @@ export async function generateRefreshToken(userId: string, uuid: string): Promis
         JSON.stringify({
             refreshToken: token,
             expiresIn: process.env.REFRESH_TOKEN_AGE
-        })
+        }),
+        { PX: ms(process.env.REFRESH_TOKEN_AGE) }
     ).catch(err => {
         console.error(err);
         process.exit(1);
